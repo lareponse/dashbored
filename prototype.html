@@ -13,10 +13,17 @@
             grid-template-columns: 1fr 2fr 1fr;
         }
 
+        .tool {
+            cursor: grab;
+        }
+
+        .tool:active {
+            cursor: grabbing;
+        }
+
         #toolbox,
         #form-canvas,
         #properties {
-            border: 2px dashed #ccc;
             padding: 1rem;
             overflow-y: auto;
         }
