@@ -109,6 +109,12 @@
                 <img class="drop-preview" alt="" style="max-width:100%;display:none;">
             </div>
         </div>
+
+
+        <div style="padding:1rem;">
+            <button id="generate-sql" class="contrast">Generate SQL</button>
+            <pre id="sql-output" style="margin-top:1rem;white-space:pre-wrap;"></pre>
+        </div>
     </section>
 
     <!-- Middle Pane: Canvas -->
@@ -116,8 +122,11 @@
         <h4>Form Canvas</h4>
     </section>
 
+
+
     <!-- Right Pane: Properties -->
     <section id="properties">
+
         <h4>Properties</h4>
         <form id="properties-form">
             <p>Click a field to edit</p>
@@ -530,9 +539,80 @@
             defaultEl.oninput = e => { input.dataset.default = e.target.value; saveCanvas(); };
         }
 
+        document.getElementById('generate-sql').addEventListener('click', generateSQL);
+
+        function generateSQL() {
+            const fields = canvas.querySelectorAll('.field');
+            let cols = [];
+
+            fields.forEach((field, idx) => {
+                const input = field.querySelector('input, select, textarea');
+                const label = field.querySelector('label');
+                if (!input) return;
+
+                // derive field name from label or fallback
+                let rawName = (label?.innerText || input.name || `col_${idx + 1}`).trim();
+                let name = slugify(rawName) || `col_${idx + 1}`;
+                let col = `\`${name}\``;
+
+                // Map input types to SQL
+                if (input.tagName === 'TEXTAREA') {
+                    col += ' TEXT';
+                    if (input.maxLength > 0) col += `(${input.maxLength})`;
+                } else if (input.tagName === 'SELECT') {
+                    const opts = Array.from(input.options).map(o => `'${o.value}'`);
+                    col += opts.length ? ` ENUM(${opts.join(',')})` : ' VARCHAR(255)';
+                } else if (input.tagName === 'INPUT') {
+                    switch (input.type) {
+                        case 'number':
+                        case 'range':
+                            col += ' INT';
+                            break;
+                        case 'date':
+                            col += ' DATE';
+                            break;
+                        case 'datetime-local':
+                            col += ' DATETIME';
+                            break;
+                        case 'time':
+                            col += ' TIME';
+                            break;
+                        case 'month':
+                            col += ' YEAR(2)';
+                            break;
+                        case 'week':
+                            col += ' VARCHAR(10)';
+                            break;
+                        case 'file':
+                            col += ' VARCHAR(255)';
+                            break;
+                        default:
+                            let len = input.maxLength > 0 ? input.maxLength : 255;
+                            col += ` VARCHAR(${len})`;
+                    }
+                }
+
+                if (input.required) col += ' NOT NULL';
+                if (input.dataset.default) col += ` DEFAULT '${input.dataset.default}'`;
+
+                cols.push(col);
+            });
+
+            const sql = `CREATE TABLE my_table (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  ${cols.join(',\n  ')}\n);`;
+
+            document.getElementById('sql-output').textContent = sql;
+        }
+
+        function slugify(str) {
+            return str
+                .toLowerCase()
+                .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // remove accents
+                .replace(/[^a-z0-9]+/g, "_") // non-alphanumerics → _
+                .replace(/^_+|_+$/g, ""); // trim leading/trailing _
+        }
+
         window.addEventListener('DOMContentLoaded', restoreCanvas);
     </script>
-
 </body>
 
 </html>
