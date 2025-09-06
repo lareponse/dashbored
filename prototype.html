@@ -132,15 +132,6 @@
                     <option value="true">Required</option>
                 </select>
             </div>
-            <div>
-                <label>Default value</label>
-                <input type="text" class="prop-default">
-            </div>
-            <div>
-                <label>Placeholder</label>
-                <input type="text" class="prop-placeholder">
-            </div>
-
         </div>
     </template>
 
@@ -158,6 +149,14 @@
                     <option value="file">File</option>
                 </select>
             </div>
+            <div>
+                <label>Default value</label>
+                <input type="text" class="prop-default">
+            </div>
+            <div>
+                <label>Placeholder</label>
+                <input type="text" class="prop-placeholder">
+            </div>
             <div class="extra-range">
                 <label>Min</label>
                 <input type="number" class="prop-min">
@@ -166,7 +165,7 @@
             </div>
         </div>
     </template>
-    
+
     <template id="tmpl-text-text">
         <div class="prop-text-text">
             <div>
@@ -237,6 +236,14 @@
             <div>
                 <label>Maxlength</label>
                 <input type="number" class="prop-maxlength" min="1">
+            </div>
+            <div>
+                <label>Placeholder</label>
+                <input type="text" class="prop-placeholder">
+            </div>
+            <div>
+                <label>Default value</label>
+                <input type="text" class="prop-default">
             </div>
             <div>
                 <label>Wrap</label>
@@ -314,17 +321,7 @@
             propertiesForm.appendChild(base);
 
             propertiesForm.querySelector('.prop-label').value = label?.innerText || '';
-            propertiesForm.querySelector('.prop-placeholder').value = input.placeholder || '';
-
             propertiesForm.querySelector('.prop-label').oninput = e => { if (label) label.innerText = e.target.value; saveCanvas(); };
-            propertiesForm.querySelector('.prop-placeholder').oninput = e => { input.placeholder = e.target.value; saveCanvas(); };
-
-            const defaultEl = propertiesForm.querySelector('.prop-default');
-            defaultEl.value = input.dataset.default || '';
-            defaultEl.oninput = e => {
-                input.dataset.default = e.target.value;
-                saveCanvas();
-            };
 
             const requiredEl = propertiesForm.querySelector('.prop-required');
             requiredEl.value = input.required ? 'true' : 'false';
@@ -333,33 +330,11 @@
                 saveCanvas();
             };
 
-            if (input.tagName === 'INPUT' && input.type === 'text') {
-                const textProps = document.getElementById('tmpl-text-text').content.cloneNode(true);
-                propertiesForm.appendChild(textProps);
-
-                const minEl = propertiesForm.querySelector('.prop-minlength');
-                const maxEl = propertiesForm.querySelector('.prop-maxlength');
-                const patEl = propertiesForm.querySelector('.prop-pattern');
-                const sizeEl = propertiesForm.querySelector('.prop-size');
-                const acEl = propertiesForm.querySelector('.prop-autocomplete');
-
-                minEl.value = input.minLength > 0 ? input.minLength : '';
-                maxEl.value = input.maxLength > 0 ? input.maxLength : '';
-                patEl.value = input.pattern || '';
-                sizeEl.value = input.size || '';
-                acEl.value = input.autocomplete || '';
-
-                minEl.oninput = e => { input.minLength = e.target.value; saveCanvas(); };
-                maxEl.oninput = e => { input.maxLength = e.target.value; saveCanvas(); };
-                patEl.oninput = e => { input.pattern = e.target.value; saveCanvas(); };
-                sizeEl.oninput = e => { input.size = e.target.value; saveCanvas(); };
-                acEl.onchange = e => { input.autocomplete = e.target.value; saveCanvas(); };
-            }
-
-            else if (input.tagName === 'INPUT') {
+            if (input.tagName === 'INPUT') {
                 const inputProps = document.getElementById('tmpl-input').content.cloneNode(true);
                 propertiesForm.appendChild(inputProps);
 
+                // type selector
                 const typeSelect = propertiesForm.querySelector('.prop-input-type');
                 typeSelect.value = input.type || 'text';
                 typeSelect.onchange = e => {
@@ -368,6 +343,19 @@
                     saveCanvas();
                 };
 
+                // default + placeholder
+                const defaultEl = propertiesForm.querySelector('.prop-default');
+                defaultEl.value = input.dataset.default || '';
+                defaultEl.oninput = e => {
+                    input.dataset.default = e.target.value;
+                    saveCanvas();
+                };
+
+                const placeholderEl = propertiesForm.querySelector('.prop-placeholder');
+                placeholderEl.value = input.placeholder || '';
+                placeholderEl.oninput = e => { input.placeholder = e.target.value; saveCanvas(); };
+
+                // range controls
                 const minEl = propertiesForm.querySelector('.prop-min');
                 const maxEl = propertiesForm.querySelector('.prop-max');
                 minEl.value = input.min || '';
@@ -381,6 +369,29 @@
                 }
 
                 toggleRangeControls();
+
+                if (input.type === 'text') {
+                    const textProps = document.getElementById('tmpl-text-text').content.cloneNode(true);
+                    propertiesForm.appendChild(textProps);
+
+                    const minEl = propertiesForm.querySelector('.prop-minlength');
+                    const maxEl = propertiesForm.querySelector('.prop-maxlength');
+                    const patEl = propertiesForm.querySelector('.prop-pattern');
+                    const sizeEl = propertiesForm.querySelector('.prop-size');
+                    const acEl = propertiesForm.querySelector('.prop-autocomplete');
+
+                    minEl.value = input.minLength > 0 ? input.minLength : '';
+                    maxEl.value = input.maxLength > 0 ? input.maxLength : '';
+                    patEl.value = input.pattern || '';
+                    sizeEl.value = input.size || '';
+                    acEl.value = input.autocomplete || '';
+
+                    minEl.oninput = e => { input.minLength = e.target.value; saveCanvas(); };
+                    maxEl.oninput = e => { input.maxLength = e.target.value; saveCanvas(); };
+                    patEl.oninput = e => { input.pattern = e.target.value; saveCanvas(); };
+                    sizeEl.oninput = e => { input.size = e.target.value; saveCanvas(); };
+                    acEl.onchange = e => { input.autocomplete = e.target.value; saveCanvas(); };
+                }
             }
 
             else if (input.tagName === 'SELECT') {
@@ -437,14 +448,20 @@
                 const rowsEl = propertiesForm.querySelector('.prop-rows');
                 const maxEl = propertiesForm.querySelector('.prop-maxlength');
                 const wrapEl = propertiesForm.querySelector('.prop-wrap');
+                const placeholderEl = propertiesForm.querySelector('.prop-placeholder');
+                const defaultEl = propertiesForm.querySelector('.prop-default');
 
                 rowsEl.value = input.rows || '';
                 maxEl.value = input.maxLength > 0 ? input.maxLength : '';
                 wrapEl.value = input.wrap || '';
+                placeholderEl.value = input.placeholder || '';
+                defaultEl.value = input.dataset.default || '';
 
                 rowsEl.oninput = e => { input.rows = e.target.value; saveCanvas(); };
                 maxEl.oninput = e => { input.maxLength = e.target.value; saveCanvas(); };
                 wrapEl.onchange = e => { input.wrap = e.target.value; saveCanvas(); };
+                placeholderEl.oninput = e => { input.placeholder = e.target.value; saveCanvas(); };
+                defaultEl.oninput = e => { input.dataset.default = e.target.value; saveCanvas(); };
             }
         }
 
