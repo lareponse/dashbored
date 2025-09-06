@@ -129,8 +129,13 @@
                 <input type="text" class="prop-placeholder">
             </div>
             <div>
-                <label><input type="checkbox" class="prop-required"> Required</label>
+                <label>Required</label>
+                <select class="prop-required">
+                    <option value="false" selected>Not required</option>
+                    <option value="true">Required</option>
+                </select>
             </div>
+
             <div>
                 <label>Default value</label>
                 <input type="text" class="prop-default">
@@ -157,6 +162,34 @@
                 <input type="number" class="prop-min">
                 <label>Max</label>
                 <input type="number" class="prop-max">
+            </div>
+        </div>
+    </template>
+    <template id="tmpl-text-text">
+        <div class="prop-text-text">
+            <div>
+                <label>Minlength</label>
+                <input type="number" class="prop-minlength" min="0">
+            </div>
+            <div>
+                <label>Maxlength</label>
+                <input type="number" class="prop-maxlength" min="1">
+            </div>
+            <div>
+                <label>Pattern (regex)</label>
+                <input type="text" class="prop-pattern">
+            </div>
+            <div>
+                <label>Size (chars)</label>
+                <input type="number" class="prop-size" min="1">
+            </div>
+            <div>
+                <label>Autocomplete</label>
+                <select class="prop-autocomplete">
+                    <option value="">Default</option>
+                    <option value="on">On</option>
+                    <option value="off">Off</option>
+                </select>
             </div>
         </div>
     </template>
@@ -244,16 +277,41 @@
             // Bind generic
             propertiesForm.querySelector('.prop-label').value = label?.innerText || '';
             propertiesForm.querySelector('.prop-placeholder').value = input.placeholder || '';
-            propertiesForm.querySelector('.prop-required').checked = input.required || false;
             propertiesForm.querySelector('.prop-default').value = input.value || '';
 
             propertiesForm.querySelector('.prop-label').oninput = e => { if (label) label.innerText = e.target.value; };
             propertiesForm.querySelector('.prop-placeholder').oninput = e => { input.placeholder = e.target.value; };
-            propertiesForm.querySelector('.prop-required').onchange = e => { input.required = e.target.checked; };
             propertiesForm.querySelector('.prop-default').oninput = e => { input.value = e.target.value; };
-
+            const requiredEl = propertiesForm.querySelector('.prop-required');
+            requiredEl.value = input.required ? 'true' : 'false';
+            requiredEl.onchange = e => {
+                input.required = (e.target.value === 'true');
+            };
             // Input-specific
-            if (input.tagName === 'INPUT') {
+            if (input.tagName === 'INPUT' && input.type === 'text') {
+                const textProps = document.getElementById('tmpl-text-text').content.cloneNode(true);
+                propertiesForm.appendChild(textProps);
+
+                const minEl = propertiesForm.querySelector('.prop-minlength');
+                const maxEl = propertiesForm.querySelector('.prop-maxlength');
+                const patEl = propertiesForm.querySelector('.prop-pattern');
+                const sizeEl = propertiesForm.querySelector('.prop-size');
+                const acEl = propertiesForm.querySelector('.prop-autocomplete');
+
+                minEl.value = input.minLength > 0 ? input.minLength : '';
+                maxEl.value = input.maxLength > 0 ? input.maxLength : '';
+                patEl.value = input.pattern || '';
+                sizeEl.value = input.size || '';
+                acEl.value = input.autocomplete || '';
+
+                minEl.oninput = e => { input.minLength = e.target.value; };
+                maxEl.oninput = e => { input.maxLength = e.target.value; };
+                patEl.oninput = e => { input.pattern = e.target.value; };
+                sizeEl.oninput = e => { input.size = e.target.value; };
+                acEl.onchange = e => { input.autocomplete = e.target.value; };
+            }
+
+            else if (input.tagName === 'INPUT') {
                 const inputProps = document.getElementById('tmpl-input').content.cloneNode(true);
                 propertiesForm.appendChild(inputProps);
 
