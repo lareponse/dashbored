@@ -124,10 +124,7 @@
                 <label>Label</label>
                 <input type="text" class="prop-label">
             </div>
-            <div>
-                <label>Placeholder</label>
-                <input type="text" class="prop-placeholder">
-            </div>
+
             <div>
                 <label>Required</label>
                 <select class="prop-required">
@@ -135,11 +132,15 @@
                     <option value="true">Required</option>
                 </select>
             </div>
-
             <div>
                 <label>Default value</label>
                 <input type="text" class="prop-default">
             </div>
+            <div>
+                <label>Placeholder</label>
+                <input type="text" class="prop-placeholder">
+            </div>
+
         </div>
     </template>
 
@@ -175,10 +176,7 @@
                 <label>Maxlength</label>
                 <input type="number" class="prop-maxlength" min="1">
             </div>
-            <div>
-                <label>Pattern (regex)</label>
-                <input type="text" class="prop-pattern">
-            </div>
+
             <div>
                 <label>Size (chars)</label>
                 <input type="number" class="prop-size" min="1">
@@ -186,10 +184,13 @@
             <div>
                 <label>Autocomplete</label>
                 <select class="prop-autocomplete">
-                    <option value="">Default</option>
-                    <option value="on">On</option>
                     <option value="off">Off</option>
+                    <option value="on">On</option>
                 </select>
+            </div>
+            <div>
+                <label>Pattern (regex)</label>
+                <input type="text" class="prop-pattern">
             </div>
         </div>
     </template>
@@ -200,8 +201,31 @@
                 <label>Options (comma separated)</label>
                 <input type="text" class="prop-options">
             </div>
+            <div>
+                <label>Required</label>
+                <select class="prop-required">
+                    <option value="false" selected>Not required</option>
+                    <option value="true">Required</option>
+                </select>
+            </div>
+            <div>
+                <label>Multiple</label>
+                <select class="prop-multiple">
+                    <option value="false" selected>Single choice</option>
+                    <option value="true">Multiple choices</option>
+                </select>
+            </div>
+            <div>
+                <label>Size (rows)</label>
+                <input type="number" class="prop-size" min="1">
+            </div>
+            <div>
+                <label>Default selected option</label>
+                <select class="prop-default-option"></select>
+            </div>
         </div>
     </template>
+
 
     <template id="tmpl-textarea">
         <div class="prop-textarea">
@@ -253,6 +277,8 @@
                     selectedField = field;       // set current selection
                     showProperties(field);       // <<< open properties pane right away
                 }
+                saveCanvas();
+
             }
         });
 
@@ -262,6 +288,9 @@
                 selectedField = field;
                 showProperties(field);
             });
+        }
+        function saveCanvas() {
+            localStorage.setItem('dashmin-canvas', canvas.innerHTML);
         }
 
         function showProperties(field) {
@@ -342,6 +371,7 @@
                 const selectProps = document.getElementById('tmpl-select').content.cloneNode(true);
                 propertiesForm.appendChild(selectProps);
 
+                // Options handling
                 const optionsEl = propertiesForm.querySelector('.prop-options');
                 optionsEl.value = Array.from(input.options).map(o => o.text).join(', ');
                 optionsEl.oninput = e => {
@@ -353,6 +383,38 @@
                         opt.value = v;
                         input.add(opt);
                     });
+
+                    refreshDefaultOptions();
+
+                };
+
+                // Multiple
+                const multipleEl = propertiesForm.querySelector('.prop-multiple');
+                multipleEl.value = input.multiple ? 'true' : 'false';
+                multipleEl.onchange = e => { input.multiple = (e.target.value === 'true'); };
+
+                // Size
+                const sizeEl = propertiesForm.querySelector('.prop-size');
+                sizeEl.value = input.size || 1;
+                sizeEl.oninput = e => { input.size = e.target.value; };
+
+                // Default selected
+                const defaultEl = propertiesForm.querySelector('.prop-default-option');
+                function refreshDefaultOptions() {
+                    defaultEl.innerHTML = '';
+                    Array.from(input.options).forEach((opt, idx) => {
+                        const o = document.createElement('option');
+                        o.value = idx;
+                        o.text = opt.text;
+                        if (opt.selected) o.selected = true;
+                        defaultEl.add(o);
+                    });
+                }
+                refreshDefaultOptions();
+
+                defaultEl.onchange = e => {
+                    const idx = parseInt(e.target.value, 10);
+                    Array.from(input.options).forEach((opt, i) => opt.selected = (i === idx));
                 };
             }
 
@@ -372,6 +434,9 @@
                 maxEl.oninput = e => { input.maxLength = e.target.value; };
                 wrapEl.onchange = e => { input.wrap = e.target.value; };
             }
+
+
+
 
         }
     </script>
