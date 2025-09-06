@@ -16,21 +16,43 @@
         #toolbox,
         #form-canvas,
         #properties {
-            border: 2px dashed var(--muted-color);
+            border: 2px dashed #ccc;
             padding: 1rem;
             overflow-y: auto;
         }
 
-        #form-canvas .field {
-            border: 1px solid var(--muted-color);
-            padding: 0.5rem;
-            margin-bottom: 0.5rem;
-            cursor: grab;
-            background: var(--card-background-color);
-        }
-
         #properties form>div {
             margin-bottom: 0.75rem;
+        }
+
+        .drop-zone {
+            border: 2px dashed #ccc;
+            border-radius: 4px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+
+        .drop-zone.drag-over {
+            border-color: #007cba;
+            background: #f9f9f9;
+        }
+
+        .drop-label {
+            display: block;
+            cursor: pointer;
+        }
+
+        .drop-label>* {
+            display: block;
+        }
+
+        .drop-zone .drop-preview {
+            max-width: 100%;
+            height: auto;
+            border-radius: var(--border-radius);
+            margin-block-end: var(--space-sm);
         }
     </style>
 </head>
@@ -41,14 +63,14 @@
     <section id="toolbox">
         <h4>Fields</h4>
 
-        <div class="tool" draggable="true">
+        <div class="tool">
             <div class="field">
                 <label>Input</label>
                 <input type="text" placeholder="Single line">
             </div>
         </div>
 
-        <div class="tool" draggable="true">
+        <div class="tool">
             <div class="field">
                 <label>Select</label>
                 <select>
@@ -57,10 +79,20 @@
             </div>
         </div>
 
-        <div class="tool" draggable="true">
+        <div class="tool">
             <div class="field">
                 <label>Textarea</label>
                 <textarea placeholder="Multiline text"></textarea>
+            </div>
+        </div>
+
+        <div class="tool">
+            <div class="field drop-zone" data-upload="/upload/endpoint/">
+                <label class="drop-label">
+                    <span>Drop file or click</span>
+                </label>
+                <input type="file" name="file" hidden>
+                <img class="drop-preview" alt="" style="max-width:100%;display:none;">
             </div>
         </div>
     </section>
@@ -68,14 +100,13 @@
     <!-- Middle Pane: Canvas -->
     <section id="form-canvas">
         <h4>Form Canvas</h4>
-        <p>Drag fields here</p>
     </section>
 
     <!-- Right Pane: Properties -->
     <section id="properties">
         <h4>Properties</h4>
         <form id="properties-form">
-            <p>Double-click a field to edit</p>
+            <p>Click a field to edit</p>
         </form>
     </section>
 
@@ -111,6 +142,7 @@
                     <option value="date">Date</option>
                     <option value="password">Password</option>
                     <option value="url">URL</option>
+                    <option value="file">File</option>
                 </select>
             </div>
             <div class="extra-range">
@@ -138,39 +170,36 @@
         const propertiesForm = document.getElementById('properties-form');
         let selectedField = null;
 
-        // Drag toolbox items into canvas
-        toolbox.querySelectorAll('.tool').forEach(tool => {
-            tool.addEventListener('dragstart', e => {
-                e.dataTransfer.setData('text/plain', 'field');
-                e.dataTransfer.effectAllowed = 'copy';
-                tool.classList.add('dragging');
-            });
-            tool.addEventListener('dragend', e => {
-                tool.classList.remove('dragging');
-            });
+        // Make toolbox a non-sortable source (cloning)
+        Sortable.create(toolbox, {
+            group: { name: 'fields', pull: 'clone', put: false },
+            sort: false,
+            animation: 150
         });
 
-        canvas.addEventListener('dragover', e => e.preventDefault());
-        canvas.addEventListener('drop', e => {
-            e.preventDefault();
-            const dragging = toolbox.querySelector('.dragging .field');
-            if (dragging) {
-                const clone = dragging.cloneNode(true);
-                clone.classList.add('field');
-                canvas.appendChild(clone);
+        // Make canvas sortable and accept clones
+        Sortable.create(canvas, {
+            group: { name: 'fields', pull: false, put: true },
+            animation: 150,
+            onAdd(evt) {
+                // evt.item is the cloned .tool wrapper
+                const field = evt.item.querySelector('.field');
+                if (field) {
+                    evt.item.replaceWith(field); // keep only the .field itself
+                    attachProperties(field);
+                    selectedField = field;       // set current selection
+                    showProperties(field);       // <<< open properties pane right away
+                }
             }
         });
 
-        // Sortable
-        Sortable.create(canvas, { animation: 150 });
 
-        // Double click to edit
-        canvas.addEventListener('dblclick', e => {
-            const field = e.target.closest('.field');
-            if (!field) return;
-            selectedField = field;
-            showProperties(field);
-        });
+        function attachProperties(field) {
+            field.addEventListener('click', () => {
+                selectedField = field;
+                showProperties(field);
+            });
+        }
 
         function showProperties(field) {
             propertiesForm.innerHTML = '';
@@ -216,6 +245,7 @@
                     propertiesForm.querySelector('.extra-range').style.display =
                         (input.type === 'number' || input.type === 'date') ? 'block' : 'none';
                 }
+
                 toggleRangeControls();
             }
 
