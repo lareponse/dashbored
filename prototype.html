@@ -170,6 +170,29 @@
         </div>
     </template>
 
+    <template id="tmpl-textarea">
+        <div class="prop-textarea">
+            <div>
+                <label>Rows</label>
+                <input type="number" class="prop-rows" min="1">
+            </div>
+            <div>
+                <label>Maxlength</label>
+                <input type="number" class="prop-maxlength" min="1">
+            </div>
+            <div>
+                <label>Wrap</label>
+                <select class="prop-wrap">
+                    <option value="">Default</option>
+                    <option value="soft">Soft</option>
+                    <option value="hard">Hard</option>
+                    <option value="off">Off</option>
+                </select>
+            </div>
+        </div>
+    </template>
+
+
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script>
         const toolbox = document.getElementById('toolbox');
@@ -257,7 +280,7 @@
             }
 
             // Select-specific
-            if (input.tagName === 'SELECT') {
+            else if (input.tagName === 'SELECT') {
                 const selectProps = document.getElementById('tmpl-select').content.cloneNode(true);
                 propertiesForm.appendChild(selectProps);
 
@@ -274,6 +297,24 @@
                     });
                 };
             }
+
+            else if (input.tagName === 'TEXTAREA') {
+                const taProps = document.getElementById('tmpl-textarea').content.cloneNode(true);
+                propertiesForm.appendChild(taProps);
+
+                const rowsEl = propertiesForm.querySelector('.prop-rows');
+                const maxEl = propertiesForm.querySelector('.prop-maxlength');
+                const wrapEl = propertiesForm.querySelector('.prop-wrap');
+
+                rowsEl.value = input.rows || '';
+                maxEl.value = input.maxLength > 0 ? input.maxLength : '';
+                wrapEl.value = input.wrap || '';
+
+                rowsEl.oninput = e => { input.rows = e.target.value; };
+                maxEl.oninput = e => { input.maxLength = e.target.value; };
+                wrapEl.onchange = e => { input.wrap = e.target.value; };
+            }
+
         }
     </script>
 </body>
