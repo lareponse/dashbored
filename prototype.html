@@ -13,21 +13,29 @@
         }
 
         #toolbox,
-        #form-fields {
-            min-height: 200px;
+        #form-fields,
+        #locked-fields {
+            min-height: 150px;
             padding: 1rem;
             border: 2px dashed var(--muted-color);
             border-radius: 0.5rem;
         }
 
         #toolbox .field,
-        #form-fields .field {
+        #form-fields .field,
+        #locked-fields .field {
             padding: 0.5rem;
             margin: 0.25rem 0;
             border: 1px solid var(--muted-border-color);
             border-radius: 0.25rem;
             background: var(--card-background-color);
             cursor: grab;
+        }
+
+        #locked-fields .field {
+            background: var(--muted-border-color);
+            cursor: not-allowed;
+            opacity: 0.8;
         }
     </style>
 </head>
@@ -52,13 +60,19 @@
 
             <!-- Form Area -->
             <section>
-                <h4>Form Fields</h4>
+                <h4>Custom Fields</h4>
                 <form id="form">
                     <div id="form-fields"></div>
                     <button type="submit">Submit</button>
                 </form>
             </section>
         </div>
+
+        <!-- Locked fields shown separately -->
+        <section>
+            <h4>Common Fields (always included)</h4>
+            <div id="locked-fields"></div>
+        </section>
 
         <button id="export">Export Schema</button>
     </main>
@@ -69,6 +83,7 @@
 
         const toolbox = document.getElementById("toolbox");
         const formFields = document.getElementById("form-fields");
+        const lockedFields = document.getElementById("locked-fields");
 
         // Toolbox → clone fields
         Sortable.create(toolbox, {
@@ -88,7 +103,7 @@
             }
         });
 
-        function renderField(type) {
+        function renderField(type, locked = false) {
             const tpl = document.getElementById(`tpl-${type}`);
             if (!tpl) return document.createTextNode("Unknown field");
 
@@ -107,23 +122,55 @@
                 label.setAttribute("for", id);
             }
 
+            if (locked) {
+                node.classList.add("locked");
+                node.dataset.locked = "true";
+            }
+
             return node;
         }
 
+        // Inject common fields (locked, non-sortable)
+        const commonFields = [
+            { type: "text", label: "ID (auto)" },
+            { type: "date", label: "Created At" },
+            { type: "date", label: "Updated At" },
+            { type: "date", label: "Enabled At" },
+            { type: "date", label: "Revoked At" }
+        ];
+
+        commonFields.forEach(f => {
+            const node = renderField(f.type, true);
+            node.querySelector("label").textContent = f.label;
+            lockedFields.appendChild(node);
+        });
+
+        // Inject "Label" into form builder by default
+        const labelField = renderField("text");
+        labelField.querySelector("label").textContent = "Label";
+        formFields.appendChild(labelField);
 
         // Export schema
         document.getElementById("export").addEventListener("click", () => {
-            const schema = [...formFields.children].map((el, idx) => ({
+            const custom = [...formFields.children].map((el, idx) => ({
                 name: el.querySelector("[name]").name,
                 type: el.dataset.type,
-                order: idx
+                order: idx,
+                locked: false
             }));
+
+            const locked = [...lockedFields.children].map((el, idx) => ({
+                name: el.querySelector("[name]").name,
+                type: el.dataset.type,
+                order: idx,
+                locked: true
+            }));
+
+            const schema = [...locked, ...custom];
             console.log("Schema:", schema);
             alert("Schema logged to console.");
         });
     </script>
-
-
 
     <!-- Templates -->
     <template id="tpl-text">
@@ -182,4 +229,5 @@
         </div>
     </template>
 </body>
+
 </html>
