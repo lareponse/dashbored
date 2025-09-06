@@ -198,31 +198,26 @@
     <template id="tmpl-select">
         <div class="prop-select">
             <div>
-                <label>Options (comma separated)</label>
-                <input type="text" class="prop-options">
-            </div>
-            <div>
-                <label>Required</label>
-                <select class="prop-required">
-                    <option value="false" selected>Not required</option>
-                    <option value="true">Required</option>
-                </select>
-            </div>
-            <div>
-                <label>Multiple</label>
+                <label>Type</label>
                 <select class="prop-multiple">
                     <option value="false" selected>Single choice</option>
                     <option value="true">Multiple choices</option>
                 </select>
             </div>
             <div>
+                <label>Default option</label>
+                <select class="prop-default-option"></select>
+            </div>
+            <div>
+                <label>Options (comma separated)</label>
+                <input type="text" class="prop-options">
+            </div>
+
+            <div>
                 <label>Size (rows)</label>
                 <input type="number" class="prop-size" min="1">
             </div>
-            <div>
-                <label>Default selected option</label>
-                <select class="prop-default-option"></select>
-            </div>
+
         </div>
     </template>
 
@@ -257,7 +252,6 @@
         </div>
     </template>
 
-
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script>
         const toolbox = document.getElementById('toolbox');
@@ -274,7 +268,7 @@
             const saved = localStorage.getItem('dashmin-canvas');
             if (saved) {
                 canvas.innerHTML = saved;
-                canvas.querySelectorAll('.field').forEach(f => attachProperties(f));
+                // no need to re-attach listeners, delegation takes care of clicks
             }
         }
 
@@ -293,7 +287,6 @@
                 const field = evt.item.querySelector('.field');
                 if (field) {
                     evt.item.replaceWith(field);
-                    attachProperties(field);
                     selectedField = field;
                     showProperties(field);
                     saveCanvas();
@@ -304,12 +297,13 @@
             }
         });
 
-        function attachProperties(field) {
-            field.addEventListener('click', () => {
-                selectedField = field;
-                showProperties(field);
-            });
-        }
+        // --- event delegation for field clicks ---
+        canvas.addEventListener('click', e => {
+            const field = e.target.closest('.field');
+            if (!field || !canvas.contains(field)) return;
+            selectedField = field;
+            showProperties(field);
+        });
 
         function showProperties(field) {
             propertiesForm.innerHTML = '';
@@ -334,7 +328,6 @@
                 const inputProps = document.getElementById('tmpl-input').content.cloneNode(true);
                 propertiesForm.appendChild(inputProps);
 
-                // type selector
                 const typeSelect = propertiesForm.querySelector('.prop-input-type');
                 typeSelect.value = input.type || 'text';
                 typeSelect.onchange = e => {
@@ -343,7 +336,6 @@
                     saveCanvas();
                 };
 
-                // default + placeholder
                 const defaultEl = propertiesForm.querySelector('.prop-default');
                 defaultEl.value = input.dataset.default || '';
                 defaultEl.oninput = e => {
@@ -355,7 +347,6 @@
                 placeholderEl.value = input.placeholder || '';
                 placeholderEl.oninput = e => { input.placeholder = e.target.value; saveCanvas(); };
 
-                // range controls
                 const minEl = propertiesForm.querySelector('.prop-min');
                 const maxEl = propertiesForm.querySelector('.prop-max');
                 minEl.value = input.min || '';
@@ -367,7 +358,6 @@
                     propertiesForm.querySelector('.extra-range').style.display =
                         (input.type === 'number' || input.type === 'date') ? 'block' : 'none';
                 }
-
                 toggleRangeControls();
 
                 if (input.type === 'text') {
@@ -467,6 +457,8 @@
 
         window.addEventListener('DOMContentLoaded', restoreCanvas);
     </script>
+
+
 </body>
 
 </html>
