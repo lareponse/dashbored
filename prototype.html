@@ -166,6 +166,7 @@
             </div>
         </div>
     </template>
+    
     <template id="tmpl-text-text">
         <div class="prop-text-text">
             <div>
@@ -257,6 +258,19 @@
         const propertiesForm = document.getElementById('properties-form');
         let selectedField = null;
 
+        // ---- persistence ----
+        function saveCanvas() {
+            localStorage.setItem('dashmin-canvas', canvas.innerHTML);
+        }
+
+        function restoreCanvas() {
+            const saved = localStorage.getItem('dashmin-canvas');
+            if (saved) {
+                canvas.innerHTML = saved;
+                canvas.querySelectorAll('.field').forEach(f => attachProperties(f));
+            }
+        }
+
         // Make toolbox a non-sortable source (cloning)
         Sortable.create(toolbox, {
             group: { name: 'fields', pull: 'clone', put: false },
@@ -269,28 +283,25 @@
             group: { name: 'fields', pull: false, put: true },
             animation: 150,
             onAdd(evt) {
-                // evt.item is the cloned .tool wrapper
                 const field = evt.item.querySelector('.field');
                 if (field) {
-                    evt.item.replaceWith(field); // keep only the .field itself
+                    evt.item.replaceWith(field);
                     attachProperties(field);
-                    selectedField = field;       // set current selection
-                    showProperties(field);       // <<< open properties pane right away
+                    selectedField = field;
+                    showProperties(field);
+                    saveCanvas();
                 }
+            },
+            onSort(evt) {
                 saveCanvas();
-
             }
         });
-
 
         function attachProperties(field) {
             field.addEventListener('click', () => {
                 selectedField = field;
                 showProperties(field);
             });
-        }
-        function saveCanvas() {
-            localStorage.setItem('dashmin-canvas', canvas.innerHTML);
         }
 
         function showProperties(field) {
@@ -299,24 +310,29 @@
             const label = field.querySelector('label');
             if (!input) return;
 
-            // Generic controls
             const base = document.getElementById('tmpl-generic').content.cloneNode(true);
             propertiesForm.appendChild(base);
 
-            // Bind generic
             propertiesForm.querySelector('.prop-label').value = label?.innerText || '';
             propertiesForm.querySelector('.prop-placeholder').value = input.placeholder || '';
-            propertiesForm.querySelector('.prop-default').value = input.value || '';
 
-            propertiesForm.querySelector('.prop-label').oninput = e => { if (label) label.innerText = e.target.value; };
-            propertiesForm.querySelector('.prop-placeholder').oninput = e => { input.placeholder = e.target.value; };
-            propertiesForm.querySelector('.prop-default').oninput = e => { input.value = e.target.value; };
+            propertiesForm.querySelector('.prop-label').oninput = e => { if (label) label.innerText = e.target.value; saveCanvas(); };
+            propertiesForm.querySelector('.prop-placeholder').oninput = e => { input.placeholder = e.target.value; saveCanvas(); };
+
+            const defaultEl = propertiesForm.querySelector('.prop-default');
+            defaultEl.value = input.dataset.default || '';
+            defaultEl.oninput = e => {
+                input.dataset.default = e.target.value;
+                saveCanvas();
+            };
+
             const requiredEl = propertiesForm.querySelector('.prop-required');
             requiredEl.value = input.required ? 'true' : 'false';
             requiredEl.onchange = e => {
                 input.required = (e.target.value === 'true');
+                saveCanvas();
             };
-            // Input-specific
+
             if (input.tagName === 'INPUT' && input.type === 'text') {
                 const textProps = document.getElementById('tmpl-text-text').content.cloneNode(true);
                 propertiesForm.appendChild(textProps);
@@ -333,11 +349,11 @@
                 sizeEl.value = input.size || '';
                 acEl.value = input.autocomplete || '';
 
-                minEl.oninput = e => { input.minLength = e.target.value; };
-                maxEl.oninput = e => { input.maxLength = e.target.value; };
-                patEl.oninput = e => { input.pattern = e.target.value; };
-                sizeEl.oninput = e => { input.size = e.target.value; };
-                acEl.onchange = e => { input.autocomplete = e.target.value; };
+                minEl.oninput = e => { input.minLength = e.target.value; saveCanvas(); };
+                maxEl.oninput = e => { input.maxLength = e.target.value; saveCanvas(); };
+                patEl.oninput = e => { input.pattern = e.target.value; saveCanvas(); };
+                sizeEl.oninput = e => { input.size = e.target.value; saveCanvas(); };
+                acEl.onchange = e => { input.autocomplete = e.target.value; saveCanvas(); };
             }
 
             else if (input.tagName === 'INPUT') {
@@ -349,14 +365,15 @@
                 typeSelect.onchange = e => {
                     input.type = e.target.value;
                     toggleRangeControls();
+                    saveCanvas();
                 };
 
                 const minEl = propertiesForm.querySelector('.prop-min');
                 const maxEl = propertiesForm.querySelector('.prop-max');
                 minEl.value = input.min || '';
                 maxEl.value = input.max || '';
-                minEl.oninput = e => { input.min = e.target.value; };
-                maxEl.oninput = e => { input.max = e.target.value; };
+                minEl.oninput = e => { input.min = e.target.value; saveCanvas(); };
+                maxEl.oninput = e => { input.max = e.target.value; saveCanvas(); };
 
                 function toggleRangeControls() {
                     propertiesForm.querySelector('.extra-range').style.display =
@@ -366,12 +383,10 @@
                 toggleRangeControls();
             }
 
-            // Select-specific
             else if (input.tagName === 'SELECT') {
                 const selectProps = document.getElementById('tmpl-select').content.cloneNode(true);
                 propertiesForm.appendChild(selectProps);
 
-                // Options handling
                 const optionsEl = propertiesForm.querySelector('.prop-options');
                 optionsEl.value = Array.from(input.options).map(o => o.text).join(', ');
                 optionsEl.oninput = e => {
@@ -383,22 +398,18 @@
                         opt.value = v;
                         input.add(opt);
                     });
-
                     refreshDefaultOptions();
-
+                    saveCanvas();
                 };
 
-                // Multiple
                 const multipleEl = propertiesForm.querySelector('.prop-multiple');
                 multipleEl.value = input.multiple ? 'true' : 'false';
-                multipleEl.onchange = e => { input.multiple = (e.target.value === 'true'); };
+                multipleEl.onchange = e => { input.multiple = (e.target.value === 'true'); saveCanvas(); };
 
-                // Size
                 const sizeEl = propertiesForm.querySelector('.prop-size');
                 sizeEl.value = input.size || 1;
-                sizeEl.oninput = e => { input.size = e.target.value; };
+                sizeEl.oninput = e => { input.size = e.target.value; saveCanvas(); };
 
-                // Default selected
                 const defaultEl = propertiesForm.querySelector('.prop-default-option');
                 function refreshDefaultOptions() {
                     defaultEl.innerHTML = '';
@@ -415,6 +426,7 @@
                 defaultEl.onchange = e => {
                     const idx = parseInt(e.target.value, 10);
                     Array.from(input.options).forEach((opt, i) => opt.selected = (i === idx));
+                    saveCanvas();
                 };
             }
 
@@ -430,15 +442,13 @@
                 maxEl.value = input.maxLength > 0 ? input.maxLength : '';
                 wrapEl.value = input.wrap || '';
 
-                rowsEl.oninput = e => { input.rows = e.target.value; };
-                maxEl.oninput = e => { input.maxLength = e.target.value; };
-                wrapEl.onchange = e => { input.wrap = e.target.value; };
+                rowsEl.oninput = e => { input.rows = e.target.value; saveCanvas(); };
+                maxEl.oninput = e => { input.maxLength = e.target.value; saveCanvas(); };
+                wrapEl.onchange = e => { input.wrap = e.target.value; saveCanvas(); };
             }
-
-
-
-
         }
+
+        window.addEventListener('DOMContentLoaded', restoreCanvas);
     </script>
 </body>
 
