@@ -6,115 +6,238 @@
     <title>Dashmin Form Builder Prototype</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
     <style>
-        #builder {
+        body {
+            height: 100vh;
+            margin: 0;
             display: grid;
-            grid-template-columns: 1fr 2fr;
-            gap: 1rem;
+            grid-template-columns: 1fr 2fr 1fr;
         }
 
         #toolbox,
-        #form-fields {
-            min-height: 200px;
-            padding: 1rem;
+        #form-canvas,
+        #properties {
             border: 2px dashed var(--muted-color);
-            border-radius: 0.5rem;
+            padding: 1rem;
+            overflow-y: auto;
         }
 
-        #toolbox .field,
-        #form-fields .field {
+        #form-canvas .field {
+            border: 1px solid var(--muted-color);
             padding: 0.5rem;
-            margin: 0.25rem 0;
-            border: 1px solid var(--muted-border-color);
-            border-radius: 0.25rem;
-            background: var(--card-background-color);
+            margin-bottom: 0.5rem;
             cursor: grab;
+            background: var(--card-background-color);
         }
 
-        .sortable-ghost {
-            opacity: 0.4;
+        #properties form>div {
+            margin-bottom: 0.75rem;
         }
     </style>
 </head>
 
 <body>
-    <main class="container">
-        <h1>Dashmin Form Builder</h1>
-        <div id="builder">
-            <section id="toolbox">
-                <h3>Toolbox</h3>
-                <div class="field" data-type="input">
-                    <label>Input</label>
-                    <input type="text" placeholder="Generic input">
-                </div>
-                <div class="field" data-type="textarea">
-                    <label>Textarea</label>
-                    <textarea placeholder="Multiline text"></textarea>
-                </div>
-                <div class="field" data-type="select">
-                    <label>Select</label>
-                    <select>
-                        <option>Option 1</option>
-                        <option>Option 2</option>
-                    </select>
-                </div>
-                <div class="field" data-type="file">
-                    <label>File upload</label>
-                    <input type="file">
-                </div>
-            </section>
-            <section id="form-fields">
-                <h3>Form</h3>
-                <p class="muted" id="empty-hint">Drag fields here to build your form</p>
-            </section>
+
+    <!-- Left Pane: Toolbox -->
+    <section id="toolbox">
+        <h4>Fields</h4>
+
+        <div class="tool" draggable="true">
+            <div class="field">
+                <label>Input</label>
+                <input type="text" placeholder="Single line">
+            </div>
         </div>
-    </main>
 
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.3/Sortable.min.js"></script>
+        <div class="tool" draggable="true">
+            <div class="field">
+                <label>Select</label>
+                <select>
+                    <option>Option 1</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="tool" draggable="true">
+            <div class="field">
+                <label>Textarea</label>
+                <textarea placeholder="Multiline text"></textarea>
+            </div>
+        </div>
+    </section>
+
+    <!-- Middle Pane: Canvas -->
+    <section id="form-canvas">
+        <h4>Form Canvas</h4>
+        <p>Drag fields here</p>
+    </section>
+
+    <!-- Right Pane: Properties -->
+    <section id="properties">
+        <h4>Properties</h4>
+        <form id="properties-form">
+            <p>Double-click a field to edit</p>
+        </form>
+    </section>
+
+    <!-- Templates for Properties -->
+    <template id="tmpl-generic">
+        <div class="prop-generic">
+            <div>
+                <label>Label</label>
+                <input type="text" class="prop-label">
+            </div>
+            <div>
+                <label>Placeholder</label>
+                <input type="text" class="prop-placeholder">
+            </div>
+            <div>
+                <label><input type="checkbox" class="prop-required"> Required</label>
+            </div>
+            <div>
+                <label>Default value</label>
+                <input type="text" class="prop-default">
+            </div>
+        </div>
+    </template>
+
+    <template id="tmpl-input">
+        <div class="prop-input">
+            <div>
+                <label>Type</label>
+                <select class="prop-input-type">
+                    <option value="text">Text</option>
+                    <option value="number">Number</option>
+                    <option value="email">Email</option>
+                    <option value="date">Date</option>
+                    <option value="password">Password</option>
+                    <option value="url">URL</option>
+                </select>
+            </div>
+            <div class="extra-range">
+                <label>Min</label>
+                <input type="number" class="prop-min">
+                <label>Max</label>
+                <input type="number" class="prop-max">
+            </div>
+        </div>
+    </template>
+
+    <template id="tmpl-select">
+        <div class="prop-select">
+            <div>
+                <label>Options (comma separated)</label>
+                <input type="text" class="prop-options">
+            </div>
+        </div>
+    </template>
+
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script>
-        let fieldCounter = 0;
+        const toolbox = document.getElementById('toolbox');
+        const canvas = document.getElementById('form-canvas');
+        const propertiesForm = document.getElementById('properties-form');
+        let selectedField = null;
 
-        // Toolbox = source list (clone mode)
-        new Sortable(document.getElementById('toolbox'), {
-            group: {
-                name: 'fields',
-                pull: 'clone',   // clone on drag
-                put: false       // prevent reordering toolbox
-            },
-            sort: false,        // keep toolbox static
-            animation: 150
+        // Drag toolbox items into canvas
+        toolbox.querySelectorAll('.tool').forEach(tool => {
+            tool.addEventListener('dragstart', e => {
+                e.dataTransfer.setData('text/plain', 'field');
+                e.dataTransfer.effectAllowed = 'copy';
+                tool.classList.add('dragging');
+            });
+            tool.addEventListener('dragend', e => {
+                tool.classList.remove('dragging');
+            });
         });
 
-        // Form = target list (sortable + accepts clones)
-        new Sortable(document.getElementById('form-fields'), {
-            group: {
-                name: 'fields',
-                pull: false,
-                put: true
-            },
-            animation: 150,
-            ghostClass: 'sortable-ghost',
-            onAdd: function (evt) {
-                fieldCounter++;
-                const id = `f${fieldCounter}`;
-                const name = `field_${fieldCounter}`;
-
-                const field = evt.item;
-                const input = field.querySelector('input, textarea, select');
-                const label = field.querySelector('label');
-
-                // assign unique attributes
-                if (input) {
-                    input.id = id;
-                    input.name = name;
-                }
-                if (label && input) {
-                    label.setAttribute('for', id);
-                }
-
-                // remove hint once first field is added
-                document.getElementById('empty-hint').style.display = 'none';
+        canvas.addEventListener('dragover', e => e.preventDefault());
+        canvas.addEventListener('drop', e => {
+            e.preventDefault();
+            const dragging = toolbox.querySelector('.dragging .field');
+            if (dragging) {
+                const clone = dragging.cloneNode(true);
+                clone.classList.add('field');
+                canvas.appendChild(clone);
             }
         });
+
+        // Sortable
+        Sortable.create(canvas, { animation: 150 });
+
+        // Double click to edit
+        canvas.addEventListener('dblclick', e => {
+            const field = e.target.closest('.field');
+            if (!field) return;
+            selectedField = field;
+            showProperties(field);
+        });
+
+        function showProperties(field) {
+            propertiesForm.innerHTML = '';
+            const input = field.querySelector('input, select, textarea');
+            const label = field.querySelector('label');
+            if (!input) return;
+
+            // Generic controls
+            const base = document.getElementById('tmpl-generic').content.cloneNode(true);
+            propertiesForm.appendChild(base);
+
+            // Bind generic
+            propertiesForm.querySelector('.prop-label').value = label?.innerText || '';
+            propertiesForm.querySelector('.prop-placeholder').value = input.placeholder || '';
+            propertiesForm.querySelector('.prop-required').checked = input.required || false;
+            propertiesForm.querySelector('.prop-default').value = input.value || '';
+
+            propertiesForm.querySelector('.prop-label').oninput = e => { if (label) label.innerText = e.target.value; };
+            propertiesForm.querySelector('.prop-placeholder').oninput = e => { input.placeholder = e.target.value; };
+            propertiesForm.querySelector('.prop-required').onchange = e => { input.required = e.target.checked; };
+            propertiesForm.querySelector('.prop-default').oninput = e => { input.value = e.target.value; };
+
+            // Input-specific
+            if (input.tagName === 'INPUT') {
+                const inputProps = document.getElementById('tmpl-input').content.cloneNode(true);
+                propertiesForm.appendChild(inputProps);
+
+                const typeSelect = propertiesForm.querySelector('.prop-input-type');
+                typeSelect.value = input.type || 'text';
+                typeSelect.onchange = e => {
+                    input.type = e.target.value;
+                    toggleRangeControls();
+                };
+
+                const minEl = propertiesForm.querySelector('.prop-min');
+                const maxEl = propertiesForm.querySelector('.prop-max');
+                minEl.value = input.min || '';
+                maxEl.value = input.max || '';
+                minEl.oninput = e => { input.min = e.target.value; };
+                maxEl.oninput = e => { input.max = e.target.value; };
+
+                function toggleRangeControls() {
+                    propertiesForm.querySelector('.extra-range').style.display =
+                        (input.type === 'number' || input.type === 'date') ? 'block' : 'none';
+                }
+                toggleRangeControls();
+            }
+
+            // Select-specific
+            if (input.tagName === 'SELECT') {
+                const selectProps = document.getElementById('tmpl-select').content.cloneNode(true);
+                propertiesForm.appendChild(selectProps);
+
+                const optionsEl = propertiesForm.querySelector('.prop-options');
+                optionsEl.value = Array.from(input.options).map(o => o.text).join(', ');
+                optionsEl.oninput = e => {
+                    const values = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
+                    input.innerHTML = '';
+                    values.forEach(v => {
+                        const opt = document.createElement('option');
+                        opt.text = v;
+                        opt.value = v;
+                        input.add(opt);
+                    });
+                };
+            }
+        }
     </script>
 </body>
 
