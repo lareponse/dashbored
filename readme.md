@@ -1,4 +1,4 @@
-# Dashbored
+# dashbored
 
 Dashbored is not a dashboard framework.
 It is not an admin generator.
@@ -28,8 +28,6 @@ You are not expected to read everything.
 
 - **Developer / DBA** → start with `ARCHITECTURE.md`, then `BACKEND.md`
 - **UX / UI Designer** → read `MANIFESTO.md`, then `UI_UX.md`
-- **Project Manager** → read `MANIFESTO.md`, then `PRODUCT_MANAGEMENT.md`
-- **Client / Stakeholder** → read `CLIENT.md`
 - **Core contributor** → read everything, in order
 
 ---
