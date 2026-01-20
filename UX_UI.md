@@ -1,6 +1,6 @@
-# UI/UX — dashbored Interface Doctrine
+# UI/UX — Dashbored Interface Doctrine
 
-This document defines **how dashbored must feel, behave, and think**.
+This document defines **how Dashbored must feel, behave, and think**.
 
 It is not a style guide.
 It is not a component library.
@@ -8,14 +8,14 @@ It is not about colors, trends, or branding.
 
 It defines a **cognitive interface language**.
 
-If you design something that looks good but violates this document,  
+If you design something that looks good but violates this doctrine,  
 the design is wrong.
 
 ---
 
 ## The Role of the Interface
 
-dashbored’s interface is not a container for features.
+Dashbored’s interface is not a container for features.
 
 It is a **thinking surface**.
 
@@ -37,14 +37,14 @@ It **thinks with them**.
 
 ## The UI Is a Spatial Language
 
-dashbored does not use navigation.
+Dashbored does not use navigation.
 It uses **position**.
 
 Every element exists in space for a reason.
 Nothing is decorative.
 Nothing is arbitrary.
 
-### Spatial Meaning
+### Spatial meaning
 
 - **Center**  
   What currently matters. The active focus of thought.
@@ -53,7 +53,7 @@ Nothing is arbitrary.
   Relevance, not hierarchy.
 
 - **Proximity between elements**  
-  Relationship, not grouping by category.
+  Relationship, not taxonomy.
 
 - **Clusters**  
   Concepts that belong together *for now*.
@@ -87,15 +87,45 @@ it is wrong.
 
 ---
 
+## Interaction Grammar (No Navigation by Accident)
+
+Dashbored must feel like a surface, not a site.
+
+Allowed primitives:
+- **Focus**: selecting an element makes it the center.
+- **Inspect**: a lightweight reveal of details without leaving the surface.
+- **Relate**: creating/strengthening a link as a deliberate act.
+- **Reposition**: moving elements to express meaning (with resistance and rules).
+- **Zoom**: changing scope, not changing “page.”
+- **Pin**: keeping a concept in the field while focus shifts.
+
+Forbidden substitutes for navigation:
+- “Go to” pages
+- breadcrumb hierarchies
+- expanding sidebars as the primary mode
+- deep, infinite drilldown chains
+
+If an interaction feels like “I am leaving somewhere else,” it violates the model.
+
+---
+
 ## Shape Language Comes Before Text
 
-Shapes in dashbored are **pre-semantic**.
+Shapes in Dashbored are **pre-semantic**.
 
 They communicate *before* labels, icons, or words.
-
 This is intentional.
 
-### Shape Grammar (Example, Adaptable)
+### Shape grammar (non-negotiable constraints)
+
+- few shapes
+- consistent meaning
+- learned through interaction
+- no legend required
+
+If you need to explain a shape with text, you failed.
+
+### Example semantic roles (may evolve, constraints may not)
 
 - **Square**  
   Stable entity. Something that has earned persistence.
@@ -109,20 +139,11 @@ This is intentional.
 - **Hexagon**  
   Composite structure or higher-order meaning.
 
-The exact mapping may evolve.
-What must not change:
-- few shapes
-- consistent meaning
-- learned through interaction
-- no legend required
-
-If you need to explain a shape with text, you failed.
-
 ---
 
 ## Letters Before Icons
 
-Early-stage dashbored uses:
+Early-stage Dashbored uses:
 - letters
 - simple glyphs
 - abstract marks
@@ -134,7 +155,7 @@ Icons carry:
 - premature metaphors
 - false familiarity
 
-dashbored avoids pretending meaning is already known.
+Dashbored avoids pretending meaning is already known.
 
 Icons may appear **only after**:
 - repeated use
@@ -149,7 +170,7 @@ Maybe.
 
 ## Constraint Is a Feature
 
-dashbored deliberately limits:
+Dashbored deliberately limits:
 - number of visible elements
 - number of relationships
 - number of actions per focus
@@ -163,7 +184,7 @@ Unlimited choice creates:
 - noise
 - loss of meaning
 
-dashbored enforces limits so that:
+Dashbored enforces limits so that:
 - what remains matters
 - structure must be intentional
 - users are not overwhelmed
@@ -175,7 +196,7 @@ Put them back.
 
 ## Showing Time, Change, and Uncertainty
 
-dashbored must visibly support:
+Dashbored must visibly support:
 - unfinished nodes
 - weak relationships
 - fading relevance
@@ -232,7 +253,7 @@ it is not.
 
 ---
 
-## What dashbored UI Is Not
+## What Dashbored UI Is Not
 
 It is not:
 - a dashboard of charts
@@ -280,14 +301,3 @@ Before validating any UI decision, ask:
 
 If the answer is “no” to any of these,
 the design is not ready.
-
----
-
-## Closing
-
-dashbored’s interface is quiet by design.
-Not empty.
-Not cold.
-Quiet.
-
-It leaves room for thought.
